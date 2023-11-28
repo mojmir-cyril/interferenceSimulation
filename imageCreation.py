@@ -29,7 +29,7 @@ def create_non_overlapping_circles_image(width, height, num_circles, output_path
         ax.add_patch(circle)
 
     plt.axis('off')
-    plt.savefig(output_path, bbox_inches='tight', pad_inches=0)
+    plt.savefig(output_path)
     plt.show()
 
 
