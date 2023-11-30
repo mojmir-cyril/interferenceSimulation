@@ -10,6 +10,17 @@ def convert_to_grayscale_image(image):
     # Scale and clip the values to the range [0, 255]
     image = (np.clip(image, 0, 255) * 255).astype(int)
     return image
+def convert_acc_spectrum_to_disp(acc_spectrum): #TODO
+    freqs = acc_spectrum[0]
+    omegas = 2 * np.pi * freqs
+    return acc_spectrum[1] / omegas ** 2
+def create_time_dependent_oscilation(displacement_spectrum, fs): #TODO
+    l = len(displacement_spectrum)
+    time = np.linspace(0, 1/fs * l, l) # zkontrolovat
+    displacement_time = np.fft.ifft(displacement_spectrum) # jak zarucit, aby byl output skutecne v jednotkach delky se spravnym scale?
+    return np.array([time, displacement_time])
+def interpolate_time_value(): # TODO
+    pass
 def add_interference_to_image(image_path, output_path, scan_speed, frequency, amplitude, blur=0, noise=0):
     # Načtení obrázku
     image = plt.imread(image_path)[:, :, :3] #bere jen prvni tri RGB kanaly, alfu zahodi
@@ -32,27 +43,23 @@ def add_interference_to_image(image_path, output_path, scan_speed, frequency, am
 
     # Zobrazení a uložení změněného obrázku
 def apply_interference(image, background, scan_speed, frequency, amplitude):
-    # Procházení pixelů a změna barvy
     height, width = image.shape
-    time = 0
     interfered_image = background
+
+    # skenovani pixel po pixelu
+    time = 0
     for i in range(height):
         for j in range(width):
-            # Získání původní barvy pixelu
-            original_color = image[i, j]
-
-            # Zde můžete provádět různé úpravy barev, například inverzi barvy
-            modified_color = original_color
             omega = 2 * np.pi * frequency
-            displacement = amplitude * np.sin(omega * time)
+            displacement = amplitude * np.sin(omega * time) # v pixelech, zatim pro oba smery stejna vychylka
             # print(displacement)
-            # Přiřazení změněné barvy zpět do obrázku
-            displaced_location_i = i + int(displacement)
-            displaced_location_j = j + int(displacement)
-            if displaced_location_i > height-1 or displaced_location_j > width-1:
+
+            displaced_location_i = i + int(displacement) # index vychylene pozice na radku
+            displaced_location_j = j + int(displacement) # index vychylene pozice v sloupci
+            if displaced_location_i > height-1 or displaced_location_j > width-1: # kdyz jsem mimo obraz, necham cerne pozadi
                 pass
             else:
-                interfered_image[i, j] = image[displaced_location_i, displaced_location_j]
+                interfered_image[i, j] = image[displaced_location_i, displaced_location_j] # prirazeni jasu vychyleneho mista na skenovany pixel
             time += scan_speed
     return interfered_image
 def show_grayscale_image(image, outPath=None, show=True, name=None):
