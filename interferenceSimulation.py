@@ -21,17 +21,17 @@ def add_interference_to_image(image_path, output_path, scan_speed, frequency, am
         grayscale_image = apply_blur_matplotlib(grayscale_image, blur_radius=blur)
         # showGrayscaleImage(grayscale_image)
 
+
+    interfered_image = apply_interference(grayscale_image, background, scan_speed, frequency, amplitude)
     if noise > 0:
-        grayscale_image = add_gaussian_noise(grayscale_image, std=noise)
+        interfered_image = add_gaussian_noise(interfered_image, std=noise)
         # showGrayscaleImage(grayscale_image)
-
-
-    interfered_image = applyInterference(grayscale_image, background)
-    showGrayscaleImage(interfered_image, outPath="outImage1")
+    show_grayscale_image(interfered_image, outPath=output_path, show=False, name=name)
+    return interfered_image
 
 
     # Zobrazení a uložení změněného obrázku
-def applyInterference(image, background):
+def apply_interference(image, background, scan_speed, frequency, amplitude):
     # Procházení pixelů a změna barvy
     height, width = image.shape
     time = 0
@@ -52,17 +52,26 @@ def applyInterference(image, background):
             if displaced_location_i > height-1 or displaced_location_j > width-1:
                 pass
             else:
-                interfered_image[i, displaced_location_j] = modified_color
+                interfered_image[i, j] = image[displaced_location_i, displaced_location_j]
             time += scan_speed
     return interfered_image
-def showGrayscaleImage(image, outPath=None):
+def show_grayscale_image(image, outPath=None, show=True, name=None):
     height, width = image.shape
     fig, ax = plt.subplots(figsize=(width/100, height/100), dpi=100)
     ax.imshow(image, cmap="gray",vmin=0, vmax=255)
     plt.axis('off')
+    plt.gca().set_axis_off()
+    plt.subplots_adjust(top=1, bottom=0, right=1, left=0,
+                        hspace=0, wspace=0)
+    plt.margins(0, 0)
     if outPath != None:
         plt.savefig(outPath)
-    plt.show()
+    if name != None:
+        fig.canvas.manager.set_window_title(name)
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
 def create_uniform_color_image(image, intensity):
     # Načtení rozměrů vstupního obrázku
     height, width = image.shape
@@ -101,11 +110,28 @@ def add_gaussian_noise(image, std, mean=0):
 
 # Nastavte cestu k obrázku a cestu pro výstup
 input_image_path = r"C:\Users\mojmir.michalek\PycharmProjects\interferenceSimulation\random_circles_image_matplotlib_reference.png"
-output_image_path = "outImage.png"
 scan_speed = 32e-6  # rychlost skenování v sec/pixel
-frequency = 13  # frekvence pohybu vzorku Hz
-amplitude = 10  # amplituda pohybu vzorku v pixelech
+# frequency = 13  # frekvence pohybu vzorku Hz
+amplitude = 6  # amplituda pohybu vzorku v pixelech
+blur = 0
+noise = 0
+output_image_name = f"interfered_image_blur_{blur}_noise_{noise}"
 
 # Volání funkce pro změnu barev obrázku
-add_interference_to_image(input_image_path, output_image_path, scan_speed, frequency, amplitude, blur=5, noise=100)
-print(f"Obrázek byl změněn a uložen do souboru: {output_image_path}")
+dict_interfered_images = {}
+n_row = 3
+n_col = 3
+freqs = np.linspace(1,500,n_row*n_col)
+for freq in freqs:
+    name = f"{output_image_name}_freq={np.round(freq,2)} Hz"
+    interfered_image = add_interference_to_image(input_image_path, f"out_blur_{blur}_noise_{noise}\{name}.png", scan_speed, freq, amplitude, blur=blur, noise=noise)
+    dict_interfered_images[freq] = interfered_image
+
+
+_, axs = plt.subplots(n_row, n_col, figsize=(12, 12),sharex='all',sharey='all')
+axs = axs.flatten()
+
+for img, ax, freq in zip(dict_interfered_images.values(), axs, freqs):
+    ax.imshow(img, cmap="gray",vmin=0, vmax=255)
+    ax.title.set_text(f'{np.round(freq,2)} Hz')
+plt.show()
