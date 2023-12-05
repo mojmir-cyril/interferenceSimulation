@@ -2,6 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.transforms import Affine2D
 import matplotlib.colors as mcolors
+import matplotlib.animation as animation
+import os
+
 
 def convert_to_grayscale_image(image):
     # Manual conversion to grayscale using luminance formula
@@ -114,31 +117,79 @@ def add_gaussian_noise(image, std, mean=0):
     noisy_image = image + noise
     noisy_image = np.clip(noisy_image, 0, 255)  # Ensure values are in the valid range [0, 255]
     return noisy_image
+def update_image(frame_number):
+    ax2.imshow(list_images[frame_number], cmap="gray", vmin=0, vmax=255)
+    # ax2.title.set_text(f'{np.round(freq,2)} Hz')
+    ax2.set_title(f'{np.round(list_freqs[frame_number],2)} Hz')
+    text.set(text=f'{np.round(list_freqs[frame_number], 2)} Hz')
+    print(f"{frame_number} of {num_of_samples}")
+
+def create_folder_if_not_exist(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
 
 # Nastavte cestu k obrázku a cestu pro výstup
 input_image_path = r"C:\Users\mojmir.michalek\PycharmProjects\interferenceSimulation\random_circles_image_matplotlib_reference.png"
-scan_speed = 32e-6  # rychlost skenování v sec/pixel
+# scan_speed = 32e-6  # rychlost skenování v sec/pixel
+scan_speeds = [100e-9, 320e-9, 1e-6, 3.2e-6, 10e-6, 32e-6, 100e-6, 320e-6, 1e-3, 3.2e-3]   # rychlost skenování v sec/pixel
+scan_speed_num = range(1,11)   # rychlost skenování v sec/pixel
+
 # frequency = 13  # frekvence pohybu vzorku Hz
 amplitude = 6  # amplituda pohybu vzorku v pixelech
-blur = 0
-noise = 0
-output_image_name = f"interfered_image_blur_{blur}_noise_{noise}"
+blur = 5
+noise = 20
 
-# Volání funkce pro změnu barev obrázku
-dict_interfered_images = {}
-n_row = 3
-n_col = 3
-freqs = np.linspace(1,500,n_row*n_col)
-for freq in freqs:
-    name = f"{output_image_name}_freq={np.round(freq,2)} Hz"
-    interfered_image = add_interference_to_image(input_image_path, f"out_blur_{blur}_noise_{noise}\{name}.png", scan_speed, freq, amplitude, blur=blur, noise=noise)
-    dict_interfered_images[freq] = interfered_image
+start_freq = 0
+end_freq = 300
+num_of_samples = 100
+
+for scan_speed, scan_speed_num in zip(scan_speeds, scan_speed_num):
+    output_image_name = f"interfered_image_blur_{blur}_noise_{noise}_XYAmp_{amplitude}_ss{scan_speed_num}"
+
+    # Volání funkce pro změnu barev obrázku
+    dict_interfered_images = {}
+    # n_row = 6
+    # n_col = 10
+    freqs = np.linspace(start_freq,end_freq,num_of_samples)
+    for freq in freqs:
+        name = f"{output_image_name}_freq={np.round(freq,2)} Hz"
+        out_folder = rf"ss{scan_speed_num}\blur_{blur}_noise_{noise}_XYAmp_{amplitude}_ss{scan_speed_num}_freqs_np.linspace({start_freq},{end_freq},{num_of_samples})"
+        create_folder_if_not_exist(out_folder)
+        out_path = rf"{out_folder}\{name}.png"
+        interfered_image = add_interference_to_image(input_image_path, out_path, scan_speed, freq, amplitude, blur=blur, noise=noise)
+        dict_interfered_images[freq] = interfered_image
 
 
-_, axs = plt.subplots(n_row, n_col, figsize=(12, 12),sharex='all',sharey='all')
-axs = axs.flatten()
+    # fig, axs = plt.subplots(n_row, n_col, figsize=(12, 12),sharex='all',sharey='all')
+    # axs = axs.flatten()
+    #
+    # for img, ax, freq in zip(dict_interfered_images.values(), axs, freqs):
+    #     ax.imshow(img, cmap="gray",vmin=0, vmax=255)
+    #     ax.title.set_text(f'{np.round(freq,2)} Hz')
+    # plt.show()
 
-for img, ax, freq in zip(dict_interfered_images.values(), axs, freqs):
-    ax.imshow(img, cmap="gray",vmin=0, vmax=255)
-    ax.title.set_text(f'{np.round(freq,2)} Hz')
-plt.show()
+
+    list_images = list(dict_interfered_images.values())
+    list_freqs = list(dict_interfered_images.keys())
+
+
+    input_image_path = r"C:\Users\mojmir.michalek\PycharmProjects\interferenceSimulation\random_circles_image_matplotlib_reference.png"
+    image = plt.imread(input_image_path)[:, :, :3] #bere jen prvni tri RGB kanaly, alfu zahodi
+    grayscale_image = convert_to_grayscale_image(image)
+    height, width = grayscale_image.shape
+    fig2, ax2 = plt.subplots(figsize=(width/100, height/100), dpi=100)
+    fig2.subplots_adjust(top=1.0, bottom=0, right=1.0, left=0, hspace=0, wspace=0)
+    plt.axis('off')
+    # plt.gca().set_axis_off()
+    # plt.subplots_adjust(top=1, bottom=0, right=1, left=0,
+    #                     hspace=0, wspace=0)
+    # plt.margins(0, 0)
+
+    print("start animating")
+    text = ax2.text(512, 100, "", size=20, color="white",
+             horizontalalignment="center")
+
+    ani = animation.FuncAnimation(fig=fig2, func=update_image, frames=num_of_samples, interval=100)
+    print("start saving")
+    ani.save(filename=rf"{out_folder}\{output_image_name}.gif", writer="pillow")
+    # plt.show()
