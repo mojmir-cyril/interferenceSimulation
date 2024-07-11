@@ -24,7 +24,7 @@ def create_time_dependent_oscilation(displacement_spectrum, fs): #TODO
     return np.array([time, displacement_time])
 def interpolate_time_value(): # TODO
     pass
-def add_interference_to_image(image_path, output_path, scan_speed, frequency, amplitude, blur=0, noise=0):
+def add_interference_to_image(image_path, output_path, scan_speed, frequency, amplitude_X, amplitude_Y, blur=0, noise=0):
     # Načtení obrázku
     image = plt.imread(image_path)[:, :, :3] #bere jen prvni tri RGB kanaly, alfu zahodi
     grayscale_image = convert_to_grayscale_image(image)
@@ -36,7 +36,7 @@ def add_interference_to_image(image_path, output_path, scan_speed, frequency, am
         # showGrayscaleImage(grayscale_image)
 
 
-    interfered_image = apply_interference(grayscale_image, background, scan_speed, frequency, amplitude)
+    interfered_image = apply_interference(grayscale_image, background, scan_speed, frequency, amplitude_X, amplitude_Y)
     if noise > 0:
         interfered_image = add_gaussian_noise(interfered_image, std=noise)
         # showGrayscaleImage(grayscale_image)
@@ -45,7 +45,7 @@ def add_interference_to_image(image_path, output_path, scan_speed, frequency, am
 
 
     # Zobrazení a uložení změněného obrázku
-def apply_interference(image, background, scan_speed, frequency, amplitude):
+def apply_interference(image, background, scan_speed, frequency, amplitude_X, amplitude_Y):
     height, width = image.shape
     interfered_image = background
 
@@ -54,11 +54,12 @@ def apply_interference(image, background, scan_speed, frequency, amplitude):
     for i in range(height):
         for j in range(width):
             omega = 2 * np.pi * frequency
-            displacement = amplitude * np.sin(omega * time) # v pixelech, zatim pro oba smery stejna vychylka
+            displacement_X = amplitude_X * np.sin(omega * time) # v pixelech, zatim pro oba smery stejna vychylka
+            displacement_Y = amplitude_Y * np.sin(omega * time) # v pixelech, zatim pro oba smery stejna vychylka
             # print(displacement)
 
-            displaced_location_i = i + int(displacement) # index vychylene pozice na radku
-            displaced_location_j = j + int(displacement) # index vychylene pozice v sloupci
+            displaced_location_i = i + round(displacement_Y) # index vychylene pozice na radku
+            displaced_location_j = j + round(displacement_X) # index vychylene pozice v sloupci
             if displaced_location_i > height-1 or displaced_location_j > width-1: # kdyz jsem mimo obraz, necham cerne pozadi
                 pass
             else:
@@ -131,20 +132,27 @@ def create_folder_if_not_exist(path):
 # Nastavte cestu k obrázku a cestu pro výstup
 input_image_path = r"C:\Users\mojmir.michalek\PycharmProjects\interferenceSimulation\random_circles_image_matplotlib_reference.png"
 # scan_speed = 32e-6  # rychlost skenování v sec/pixel
-scan_speeds = [100e-9, 320e-9, 1e-6, 3.2e-6, 10e-6, 32e-6, 100e-6, 320e-6, 1e-3, 3.2e-3]   # rychlost skenování v sec/pixel
-scan_speed_num = range(1,11)   # rychlost skenování v sec/pixel
+# scan_speeds = [100e-9, 320e-9, 1e-6, 3.2e-6, 10e-6, 32e-6, 100e-6, 320e-6, 1e-3, 3.2e-3]   # rychlost skenování v sec/pixel
+scan_speeds = [32e-6]   # rychlost skenování v sec/pixel
+scan_speed_num = range(1,11)
 
 # frequency = 13  # frekvence pohybu vzorku Hz
-amplitude = 6  # amplituda pohybu vzorku v pixelech
-blur = 5
+# amplitude = 6  # amplituda pohybu vzorku v pixelech
+amplitude_X = 0
+amplitude_Y = 3
+blur = 15
 noise = 20
+width = 1024
+height = 768
 
-start_freq = 0
-end_freq = 300
-num_of_samples = 100
+
 
 for scan_speed, scan_speed_num in zip(scan_speeds, scan_speed_num):
-    output_image_name = f"interfered_image_blur_{blur}_noise_{noise}_XYAmp_{amplitude}_ss{scan_speed_num}"
+    output_image_name = f"interfered_image_blur_{blur}_noise_{noise}_XAmp_{amplitude_X}_YAmp_{amplitude_Y}_ss{scan_speed_num}"
+
+    start_freq = 0
+    end_freq = 1/(scan_speed * width)
+    num_of_samples = 20
 
     # Volání funkce pro změnu barev obrázku
     dict_interfered_images = {}
@@ -153,10 +161,10 @@ for scan_speed, scan_speed_num in zip(scan_speeds, scan_speed_num):
     freqs = np.linspace(start_freq,end_freq,num_of_samples)
     for freq in freqs:
         name = f"{output_image_name}_freq={np.round(freq,2)} Hz"
-        out_folder = rf"ss{scan_speed_num}\blur_{blur}_noise_{noise}_XYAmp_{amplitude}_ss{scan_speed_num}_freqs_np.linspace({start_freq},{end_freq},{num_of_samples})"
+        out_folder = rf"ss{scan_speed_num}\blur_{blur}_noise_{noise}_XAmp_{amplitude_X}_YAmp_{amplitude_Y}_ss{scan_speed_num}_freqs_np.linspace({start_freq},{end_freq},{num_of_samples})"
         create_folder_if_not_exist(out_folder)
         out_path = rf"{out_folder}\{name}.png"
-        interfered_image = add_interference_to_image(input_image_path, out_path, scan_speed, freq, amplitude, blur=blur, noise=noise)
+        interfered_image = add_interference_to_image(input_image_path, out_path, scan_speed, freq, amplitude_X, amplitude_Y, blur=blur, noise=noise)
         dict_interfered_images[freq] = interfered_image
 
 
