@@ -5,7 +5,7 @@ import matplotlib.colors as mcolors
 import matplotlib.animation as animation
 import os
 
-def get_interfered_image(input_image_path, freq, amplitude_X, amplitude_Y, blur, noise, scan_speed_num, use_synch_50, save_image=False, out_folder=None, crop_to_RT_size=True):
+def get_interfered_image(freq, amplitude_X, amplitude_Y, blur, noise, width, scan_speed_num, use_synch_50, save_image=False):
     def convert_to_grayscale_image(image):
         # Manual conversion to grayscale using luminance formula
         image = np.dot(image[..., :3], [0.299, 0.587, 0.114])
@@ -24,21 +24,11 @@ def get_interfered_image(input_image_path, freq, amplitude_X, amplitude_Y, blur,
         return np.array([time, displacement_time])
     def interpolate_time_value(): # TODO
         pass
-    def add_interference_to_image(image_path, output_path, scan_speed_time_per_px, frequency, amplitude_X, amplitude_Y, use_synch_50, blur=0, noise=0, crop_to_RT_size=True):
+    def add_interference_to_image(image_path, output_path, scan_speed_time_per_px, frequency, amplitude_X, amplitude_Y, use_synch_50, blur=0, noise=0):
         # Načtení obrázku
-        image = plt.imread(image_path) #bere jen prvni tri RGB kanaly, alfu zahodi
-        # Kontrola tvaru
-        if len(image.shape) == 2:
-            grayscale_image = (np.clip(image, 0, 255) * 255).astype(int)
-            print("Obrázek je černobílý.")
-        elif len(image.shape) == 3:# and image.shape[2] == 3:
-            grayscale_image = convert_to_grayscale_image(image)
-            print("Obrázek je barevný (RGB).")
+        image = plt.imread(image_path)[:, :, :3] #bere jen prvni tri RGB kanaly, alfu zahodi
+        grayscale_image = convert_to_grayscale_image(image)
         # showGrayscaleImage(grayscale_image)
-        if crop_to_RT_size:
-            width = grayscale_image.shape[1]
-            height = 768
-            grayscale_image = grayscale_image[:height, :width]
         background = create_uniform_color_image(grayscale_image, intensity=0)
 
         if blur > 0:
@@ -50,26 +40,28 @@ def get_interfered_image(input_image_path, freq, amplitude_X, amplitude_Y, blur,
         if noise > 0:
             interfered_image = add_gaussian_noise(interfered_image, std=noise)
             # showGrayscaleImage(grayscale_image)
-        show_grayscale_image(interfered_image, outPath=output_path, show=False, name=None)
+        show_grayscale_image(interfered_image, outPath=None, show=False, name=None)
         return interfered_image
 
 
         # Zobrazení a uložení změněného obrázku
-    def apply_interference(image, background, scan_speed_time_per_px, frequency, amplitude_X, amplitude_Y, use_synch_50):
+    def apply_interference(image, background, scan_speed_time_per_px, time_displacement_X, time_displacement_Y, use_synch_50):
         height, width = image.shape
         interfered_image = background
+
+        if len(time_displacement_X) != height * width:
+            raise Exception(f"Length of time_displacement_X ({len(time_displacement_X)} is not same as number of pixels in image ({height * width}).")
+        if len(time_displacement_Y) != height * width:
+            raise Exception(f"Length of time_displacement_Y ({len(time_displacement_Y)} is not same as number of pixels in image ({height * width}).")
 
         # skenovani pixel po pixelu
         time = np.float32(0)
         for i in range(height):
             for j in range(width):
-                omega = 2 * np.pi * frequency
-                displacement_X = amplitude_X * np.sin(omega * time) # v pixelech
-                displacement_Y = amplitude_Y * np.sin(omega * time) # v pixelech
-                # print(displacement)
 
-                displaced_location_i = i + round(displacement_Y) # index vychylene pozice na radku
-                displaced_location_j = j + round(displacement_X) # index vychylene pozice v sloupci
+
+                displaced_location_i = i + round(time_displacement_Y) # index vychylene pozice na radku
+                displaced_location_j = j + round(time_displacement_X) # index vychylene pozice v sloupci
                 if displaced_location_i > height-1 or displaced_location_j > width-1: # kdyz jsem mimo obraz, necham cerne pozadi
                     pass
                 else:
@@ -136,9 +128,47 @@ def get_interfered_image(input_image_path, freq, amplitude_X, amplitude_Y, blur,
         if not os.path.exists(path):
             os.makedirs(path)
 
+    def generate_single_freq_signal(amplitude_X, amplitude_Y, frequency, width, height):
+        virtual_time = np.arange(0, width*height)
+        omega = 2 * np.pi * frequency
+        displacement_X = amplitude_X * np.sin(omega * virtual_time)  # v pixelech
+        displacement_Y = amplitude_Y * np.sin(omega * virtual_time)  # v pixelech
+        return displacement_X, displacement_Y
+    def generate_multiple_freq_signal():
+        pass
+
+    def generate_signal_spectra():
+        pass
+
+    # Slovník funkcí
+    functions = {
+        'single_frequency': generate_single_freq_signal,
+        'multiple_frequency': generate_multiple_freq_signal,
+        'spectra': generate_signal_spectra
+    }
+
+    # Funkce pro volání správné funkce na základě parametru
+    def generate_signal(func_name, **kwargs):
+        func = functions.get(func_name)
+        if func:
+            return func(**kwargs)
+        else:
+            raise ValueError(f"Function {func_name} not found")
+
+    # Příklad použití
+    print(generate_signal('single_frequency', amplitude_X=amplitude_X, amplitude_Y=amplitude_Y, frequency=frequency, width=width, height=height))  # Výstup: 6
+    print(generate_signal('multiple_frequency', x=2, y=3))  # Výstup: 6
+    print(generate_signal('spectra', x=1, y=2, z=3))  # Výstup: 6
+
+    def create_interference_signal(method: str):
+        if method == "single frequency":
+            omega = 2 * np.pi * frequency
+            displacement_X = amplitude_X * np.sin(omega * time)  # v pixelech
+            displacement_Y = amplitude_Y * np.sin(omega * time)  # v pixelech
+        return displacement_X, displacement_Y
+
     # Nastavte cestu k obrázku a cestu pro výstup
-    # input_image_path = r"C:\Users\mojmir.michalek\PycharmProjects\interferenceSimulation\random_circles_image_matplotlib_reference.png"
-    # input_image_path = r"S:\Finalizace\FinalizaceS8000\124-0048, JAR\images\RT_port11\RT_nastrel\TMP_cat-4_Heavy_dumper\02_09_2024\RT_AD_01_1000_Heavy_dump-1.png"
+    input_image_path = r"C:\Users\mojmir.michalek\PycharmProjects\interferenceSimulation\random_circles_image_matplotlib_reference.png"
     # scan_speed = 32e-6  # rychlost skenování v sec/pixel
     scan_speeds_time_per_px = [100e-9, 320e-9, 1e-6, 3.2e-6, 10e-6, 32e-6, 100e-6, 320e-6, 1e-3, 3.2e-3]   # rychlost skenování v sec/pixel
 
@@ -149,14 +179,14 @@ def get_interfered_image(input_image_path, freq, amplitude_X, amplitude_Y, blur,
     if save_image:
         output_image_name = f"interfered_image_blur_{blur}_noise_{noise}_XAmp_{amplitude_X}_YAmp_{amplitude_Y}_ss{scan_speed_num}"
         name = f"{output_image_name}_freq={np.round(freq,2)} Hz"
-        # out_folder = rf"ss{scan_speed_num}\blur_{blur}_noise_{noise}_XAmp_{amplitude_X}_YAmp_{amplitude_Y}_ss{scan_speed_num}"
-        if out_folder is None:
-            out_folder = rf"blur_{blur}_noise_{noise}_ss{scan_speed_num}_freq{freq}"
+        out_folder = rf"ss{scan_speed_num}\blur_{blur}_noise_{noise}_XAmp_{amplitude_X}_YAmp_{amplitude_Y}_ss{scan_speed_num}"
         create_folder_if_not_exist(out_folder)
         out_path = rf"{out_folder}\{name}.png"
     else:
         out_path = None
 
-    interfered_image = add_interference_to_image(input_image_path, out_path, scan_speed_time_per_px, freq, amplitude_X, amplitude_Y, use_synch_50=use_synch_50, blur=blur, noise=noise, crop_to_RT_size=crop_to_RT_size)
+
+
+    interfered_image = add_interference_to_image(input_image_path, out_path, scan_speed_time_per_px, freq, amplitude_X, amplitude_Y, use_synch_50=use_synch_50, blur=blur, noise=noise)
 
     return show_grayscale_image(interfered_image, show=False)
