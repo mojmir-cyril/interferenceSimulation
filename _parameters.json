@@ -1,0 +1,212 @@
+{
+   "general": {
+      "titles": {
+         "part_of_name_common_for_desired_dataset": "title_used_for_files_with_given_common_part_of_the_name"
+      },
+      "color": {
+         "frame": "-k",
+         "X": "-b",
+         "Y": "-r",
+         "Z": "-g",
+         "module": "-m"
+      },
+      "xAxisRange": {
+         "rangeMin": 1,
+         "rangeMax": 600
+      },
+      "legend": true,
+      "TMP_peak_evaluation_range": {
+         "rangeMin": 150,
+         "rangeMax": 250
+      },
+      "TMP_peak_limits": {
+         "first_limit": 0.000546226,
+         "second_limit": 0.000741579,
+         "third_limit": 0.000936932,
+         "fourth_limit": 0.001132284
+      },
+      "moving_average": 0
+   },
+
+   "tf": {
+      "datanames": [
+         "TF_1Z+/1Z+", "TF_2Z+/1Z+", "TF_3Z+/1Z+"
+      ],
+      "label": {
+         "x": "Frequency (Hz)",
+         "y": "Transfer Function (-)"
+      },
+      "title": "vibration transfer",
+      "subtitle": {
+         "X": "frame to axis X",
+         "Y": "frame to axis Y",
+         "Z": "frame to axis Z",
+         "module": "frame to stage (module)"
+      },
+      "scale": {
+         "X": "stage",
+         "Y": "stage",
+         "Z": "stage",
+         "module": "stage"
+      },
+      "xlim": {
+         "set": true,
+         "min": 0,
+         "max": 500,
+         "major step": 50,
+         "minor step": 10
+      },
+      "ylim": {
+         "set": true,
+         "stage": {
+            "min": 0,
+            "max": 1,
+            "major step": 0.05,
+            "minor step": 0.01
+         }
+      },
+      "integral limits": [
+         10, 500
+      ]
+   },
+
+   "spectra": {
+      "datanames": [
+         "AI 1", "AI 2", "AI 3", "AI 4"
+      ],
+      "label": {
+         "x": "Frequency (Hz)",
+         "y": "FFT amplitude (a.u.)"
+      },
+      "title": "vibration background",
+      "subtitle": {
+         "frame": "frame",
+         "X": "axis X",
+         "Y": "axis Y",
+         "Z": "axis Z",
+         "module": "module"
+      },
+      "scale": {
+         "frame": "frame",
+         "X": "stage",
+         "Y": "stage",
+         "Z": "stage",
+         "module": "stage"
+      },
+      "xlim": {
+         "set": true,
+         "min": 0,
+         "max": 600,
+         "major step": 100,
+         "minor step": 20
+      },
+      "ylim": {
+         "set": true,
+         "stage": {
+            "min": 0,
+            "max": 1e-3,
+            "major step": 1e-4,
+            "minor step": 2e-5
+         },
+         "frame": {
+            "min": 0,
+            "max": 5e-6,
+            "major step": 1e-6,
+            "minor step": 2e-7
+         }
+      },
+      "integral limits": [
+         40, 500
+      ]
+   },
+
+   "impact": {
+      "datanames": [
+         "AI 1", "AI 2", "AI 3", "AI 4"
+      ],
+      "label": {
+         "x": "Time (ms)",
+         "y": "Acceleration ($\\mathregular{m/s^2}$)"
+      },
+      "title": "impact test",
+      "subtitle": {
+         "frame": "frame",
+         "X": "axis X",
+         "Y": "axis Y",
+         "Z": "axis Z"
+      },
+      "scale": {
+         "frame": "frame",
+         "X": "stage",
+         "Y": "stage",
+         "Z": "stage"
+      },
+      "xlim": {
+         "set": true,
+         "min": -50,
+         "max": 600,
+         "major step": 100,
+         "minor step": 50
+      },
+      "ylim": {
+         "set": true,
+         "stage": {
+            "min": -1,
+            "max": 1,
+            "major step": 0.5,
+            "minor step": 0.25
+         },
+         "frame": {
+            "min": -20,
+            "max": 20,
+            "major step": 20,
+            "minor step": 10
+         }
+      }
+   },
+
+   "natural": {
+      "datanames": [
+         "AI 1", "AI 2", "AI 3", "AI 4"
+      ],
+      "label": {
+         "x": "Time (ms)",
+         "y": "Acceleration ($\\mathregular{m/s^2}$)"
+      },
+      "title": "natural frequency test",
+      "subtitle": {
+         "frame": "frame",
+         "X": "axis X",
+         "Y": "axis Y",
+         "Z": "axis Z"
+      },
+      "scale": {
+         "frame": "frame",
+         "X": "stage",
+         "Y": "stage",
+         "Z": "stage"
+      },
+      "xlim": {
+         "set": true,
+         "min": 1000,
+         "max": 4000,
+         "major step": 500,
+         "minor step": 100
+      },
+      "ylim": {
+         "set": true,
+         "stage": {
+            "min": -0.15,
+            "max": 0.15,
+            "major step": 0.05,
+            "minor step": 0.01
+         },
+         "frame": {
+            "min": -1,
+            "max": 1,
+            "major step": 20,
+            "minor step": 10
+         }
+      }
+   }
+}

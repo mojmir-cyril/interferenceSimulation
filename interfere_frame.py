@@ -5,7 +5,7 @@ import matplotlib.colors as mcolors
 import matplotlib.animation as animation
 import os
 
-def get_interfered_image(freq, amplitude_X, amplitude_Y, blur, noise, width, scan_speed_num, use_synch_50, save_image=False):
+def get_interfered_image(freq, amplitude_X, amplitude_Y, blur, noise, scan_speed_num, use_synch_50, save_image=False):
     def convert_to_grayscale_image(image):
         # Manual conversion to grayscale using luminance formula
         image = np.dot(image[..., :3], [0.299, 0.587, 0.114])
@@ -24,7 +24,7 @@ def get_interfered_image(freq, amplitude_X, amplitude_Y, blur, noise, width, sca
         return np.array([time, displacement_time])
     def interpolate_time_value(): # TODO
         pass
-    def add_interference_to_image(image_path, output_path, scan_speed_time_per_px, frequency, amplitude_X, amplitude_Y, use_synch_50, blur=0, noise=0):
+    def add_interference_to_image(image_path, output_path, scan_speed_time_per_px, frequency, amplitude_X, amplitude_Y, use_synch_50, blur=0, noise=0, show=True):
         # Načtení obrázku
         image = plt.imread(image_path)[:, :, :3] #bere jen prvni tri RGB kanaly, alfu zahodi
         grayscale_image = convert_to_grayscale_image(image)
@@ -40,7 +40,7 @@ def get_interfered_image(freq, amplitude_X, amplitude_Y, blur, noise, width, sca
         if noise > 0:
             interfered_image = add_gaussian_noise(interfered_image, std=noise)
             # showGrayscaleImage(grayscale_image)
-        show_grayscale_image(interfered_image, outPath=None, show=False, name=None)
+        show_grayscale_image(interfered_image, outPath=None, show=show, name=None)
         return interfered_image
 
 
@@ -156,7 +156,7 @@ def get_interfered_image(freq, amplitude_X, amplitude_Y, blur, noise, width, sca
             raise ValueError(f"Function {func_name} not found")
 
     # Příklad použití
-    print(generate_signal('single_frequency', amplitude_X=amplitude_X, amplitude_Y=amplitude_Y, frequency=frequency, width=width, height=height))  # Výstup: 6
+    print(generate_signal('single_frequency', amplitude_X=amplitude_X, amplitude_Y=amplitude_Y, frequency=freq, width=width, height=height))  # Výstup: 6
     print(generate_signal('multiple_frequency', x=2, y=3))  # Výstup: 6
     print(generate_signal('spectra', x=1, y=2, z=3))  # Výstup: 6
 
@@ -187,6 +187,7 @@ def get_interfered_image(freq, amplitude_X, amplitude_Y, blur, noise, width, sca
 
 
 
-    interfered_image = add_interference_to_image(input_image_path, out_path, scan_speed_time_per_px, freq, amplitude_X, amplitude_Y, use_synch_50=use_synch_50, blur=blur, noise=noise)
+    interfered_image = add_interference_to_image(input_image_path, out_path, scan_speed_time_per_px, freq, amplitude_X, amplitude_Y, use_synch_50=use_synch_50, blur=blur, noise=noise, show=True)
 
-    return show_grayscale_image(interfered_image, show=False)
+    return show_grayscale_image(interfered_image, show=True)
+
