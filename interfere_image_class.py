@@ -4,6 +4,7 @@ from matplotlib.transforms import Affine2D
 import matplotlib.colors as mcolors
 import matplotlib.animation as animation
 import os
+from scipy.ndimage import map_coordinates
 
 class InterferedImage():
     def __init__(self,
@@ -28,11 +29,13 @@ class InterferedImage():
                  use_amp_phase=False,
                  phases_X=None,
                  phases_Y=None,
-                 use_random_phase=False):
+                 use_random_phase=False,
+                 use_subpixel_precision=True):
         # Nastavte cestu k obrázku a cestu pro výstup
         # input_image_path = r"C:\Users\mojmir.michalek\PycharmProjects\interferenceSimulation\random_circles_image_matplotlib_reference.png"
         # input_image_path = r"S:\Finalizace\FinalizaceS8000\124-0048, JAR\images\RT_port11\RT_nastrel\TMP_cat-4_Heavy_dumper\02_09_2024\RT_AD_01_1000_Heavy_dump-1.png"
         # scan_speed = 32e-6  # rychlost skenování v sec/pixel
+        self.use_subpixel_precision = use_subpixel_precision
         self.frequency = frequency
         self.amplitude_X = amplitude_X
         self.amplitude_Y = amplitude_Y
@@ -387,13 +390,24 @@ class InterferedImage():
                 displacement_Y = time_displacements_Y[k] # v pixelech
                 # print(displacement)
 
-                displaced_location_i = i + round(displacement_Y) # index vychylene pozice na radku
-                displaced_location_j = j + round(displacement_X) # index vychylene pozice v sloupci
-                if displaced_location_i > height-1 or displaced_location_j > width-1: # kdyz jsem mimo obraz, necham cerne pozadi
+                displaced_location_X = i + displacement_Y # index vychylene pozice na radku
+                displaced_location_Y = j + displacement_X # index vychylene pozice v sloupci
+                if displaced_location_X > height-1 or displaced_location_Y > width-1: # kdyz jsem mimo obraz, necham cerne pozadi
                     pass
                 else:
-                    interfered_image[i, j] = image[displaced_location_i, displaced_location_j] # prirazeni jasu vychyleneho mista na skenovany pixel
+                    if self.use_subpixel_precision:
+                        # Proveď bilineární interpolaci pro subpixelovou presnost
+                        interpolated_value = map_coordinates(image, [[displaced_location_X], [displaced_location_Y]],
+                                                             order=1)  # (y, x) v souřadnicovém systému obrázků
+                        interfered_image[i, j] = interpolated_value  # prirazeni jasu vychyleneho mista na skenovany pixel
+                    else:
+                        interfered_image[i, j] = image[round(displaced_location_X), round(displaced_location_Y)] # prirazeni jasu vychyleneho mista na skenovany pixel
                 k += 1
+                if (i * height + j) % (width * height // 100) == 0:
+                    print(f'Provedeno: {int((i * height + j) / (width * height) * 100)}%')
+
+
+
 
         return interfered_image
     def show_grayscale_image(self, image):
